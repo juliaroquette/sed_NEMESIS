@@ -62,9 +62,14 @@ def mag2flux(mag, zeropoint, err_mag):
         (10**(- mag/2.5))*err_mag/2.5
 
 
-def fluxPerUnitFrequency(lam_eff, flux):
+def fluxPerUnitFrequency(lam_eff, flux, cgs=True):
     """
-    transform fluxes and lambda eff in flux per unit frequency in cgs
+    Convert Fluxes to nuF_nu
+    ___input___
+    lam_eff -> Angstrom
+    flux -> Jy
+    ___output___
+    nuF_nu in either cgs (if cgs=True) or W/m2
     """
     # Convert lambda eff to Angstrom
     lam_eff = lam_eff * u.Angstrom
@@ -74,7 +79,11 @@ def fluxPerUnitFrequency(lam_eff, flux):
     freq = const.c / lam_eff
     # Convert flux to erg/s/cm/cm/Hz
     flux = flux.to(u.erg / (u.s * u.cm**2 * u.Hz))
-    # Calculate nuF_nu in erg/s/cm/cm
-    nuF_nu = (flux * freq).to(u.erg / u.s / u.cm**2)
-
-    return nuF_nu.value  # Return the nuF_nu values as a NumPy array
+    if bool(cgs):
+        # Calculate nuF_nu in erg/s/cm/cm
+        nuF_nu = (flux * freq).to(u.erg / u.s / u.cm**2)
+    else:
+        # Calculate nuF_nu in W/m/m
+        nuF_nu = (flux * freq).to(u.W / u.m**2)
+    # Return the nuF_nu values as a NumPy array
+    return nuF_nu.value
