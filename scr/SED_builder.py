@@ -62,7 +62,7 @@ def mag2flux(mag, zeropoint, err_mag):
         (10**(- mag/2.5))*err_mag/2.5
 
 
-def fluxPerUnitFrequency(lam_eff, flux, cgs=True):
+def flux2nuFnu(lam_eff, flux, error, cgs=True):
     """
     Convert Fluxes to nuF_nu
     ___input___
@@ -73,17 +73,21 @@ def fluxPerUnitFrequency(lam_eff, flux, cgs=True):
     """
     # Convert lambda eff to Angstrom
     lam_eff = lam_eff * u.Angstrom
-    # Convert flux to Jansky
+    # Convert flux and uncertainty to Jansky
     flux = flux * u.Jy
+    error = error * u.Jy
     # Calculate frequency
     freq = const.c / lam_eff
-    # Convert flux to erg/s/cm/cm/Hz
+    # Convert flux and uncertainty to erg/s/cm/cm/Hz
     flux = flux.to(u.erg / (u.s * u.cm**2 * u.Hz))
+    error = error.to(u.erg / (u.s * u.cm**2 * u.Hz))
     if bool(cgs):
         # Calculate nuF_nu in erg/s/cm/cm
         nuF_nu = (flux * freq).to(u.erg / u.s / u.cm**2)
+        nuF_nu_error = (error * freq).to(u.erg / u.s / u.cm**2)
     else:
         # Calculate nuF_nu in W/m/m
         nuF_nu = (flux * freq).to(u.W / u.m**2)
+        nuF_nu_error = (error * freq).to(u.W / u.m**2)
     # Return the nuF_nu values as a NumPy array
-    return nuF_nu.value
+    return nuF_nu.value, nuF_nu_error.value
