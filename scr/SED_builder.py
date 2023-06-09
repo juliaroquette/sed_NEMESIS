@@ -9,10 +9,10 @@ from astropy import units as u
 from astropy import constants as const
 from matplotlib import colors
 import matplotlib.pyplot as plt
-
+import pandas as pd
 # list of useful markers from matplotlib
-useful_markers = ['o', 'v', '^', '<', '>', '8', 's', 'p', '*', 'h', 'H', '+',
-                  'x', 'D', 'd', 'P', 'X']
+useful_markers = ['o', 'v', '^', '<', '>', '8', 's', 'p', '*', 'H', '+',
+                  'x', 'D','d', 'P', 'X']
 
 
 class zeropoints:
@@ -26,7 +26,7 @@ class zeropoints:
     """
 
     def __init__(self, my_dir='/Users/juliaroquette/Work/Data/SED_builder/',
-                 filename='zero_points.csv'):
+                 filename='zero_points.csv', cmap=plt.cm.nipy_spectral):
         self.bands = []
         self.lambda_refs = []
         self.zps = []
@@ -44,6 +44,19 @@ class zeropoints:
         self.lambda_refs = np.array(self.lambda_refs)[order]
         self.zps = np.array(self.zps)[order]
         self.refs = np.array(self.refs)[order]
+        #
+        survey_names = []
+        for name in self.bands:
+            testing_string = name.split('_')[0]
+            if testing_string not in set(survey_names):
+                survey_names.append(testing_string)
+        self.colors = {survey_names[i]: x for i, x in
+                       enumerate(cmap(np.linspace(0.05, 0.95,
+                                                  len(survey_names))))}
+        self.markers = {survey_names[i]: useful_markers[x] for i, x in
+                        enumerate(np.random.randint(0, len(useful_markers),
+                                                    len(survey_names)))}
+        self.colors['generic'] = 'darkgray'
 
     class band:
         def __init__(self, row):
@@ -52,75 +65,66 @@ class zeropoints:
             # self.err_zp = float(row['err_zp'])
             self.bib = row['bib']
 
-    def get_survey_colours(self, cmap=plt.cm.turbo, vmin=0, vmax=1):
-        survey_names = []
-        for name in self.bands:
-            testing_string = name.split('_')[0]
-            if testing_string not in set(survey_names):
-                survey_names.append(testing_string)
-        norm = colors.Normalize(vmin=vmin, vmax=vmax)
-        self.colors = {survey_names[i]: x for i, x in
-                       enumerate(cmap(norm(np.linspace(0, 1,
-                                                       len(survey_names)))))}
-        self.markers = {survey_names[i]: useful_markers[x] for i, x in
-                        enumerate(np.random.randint(0, len(useful_markers) - 1,
-                                  len(self.colors)))}
 
-
-def plotSED(zp, df, alpha=0.6, ms=50, save=False,
-            save_dir='/Users/juliaroquette/Work/Plots/SED/'):
+def plotSED(zp, df, alpha=0.6, ms=50, save=False, cmap=plt.cm.nipy_spectral,
+            save_dir='/Users/juliaroquette/Work/Plots/SED/', talkative=False):
     """
     zp is the class zeropoints loaded, for example:
         zp = zeropoints()
     df is a dataframe containing lambdas, nuF_nu and uncertainties
     """
-    lambda_key = '_lambda'
-    nu_Fnu_key = '_nu_Fnu'
+    try:
+        assert len(df) == 1
+        if bool(talkative):
+            print("Correct size for {0} df: {1}".format(
+                df['Internal_ID'].iloc[0], len(df)))
+        df.reset_index(inplace=True)
+    except AssertionError:
+        print("Please, make sure df includes only one source. Current size:",
+              len(df))
+    nu_Fnu_key = 'nu_Fnu'
     error_key = 'error'
     lim_key = 'lim'
-    # lim_nu_Fnu_values = []
     column = df.columns.to_list()
-    nu_Fnu_values = np.array([df[item].to_list() for item in column if
-                              (nu_Fnu_key in item) and (error_key not in item)
-                              and (lim_key not in item)]).reshape(-1)
-    lambda_values =  np.array([df[item].to_list() for item in column if
-                               (lambda_key in item)]).reshape(-1)
-    nu_Fnu_error_values =  np.array([df[item].to_list() for item in column if
-                                     (nu_Fnu_key in item) and (error_key in
-                                                               item) and
-                                     (lim_key not in item)]).reshape(-1)
-    zp.get_survey_colours()
-    colors = [zp.colors[name.split('_')[0]] for name in column if
-              (lambda_key in name)]
-    markers = [zp.markers[name.split('_')[0]] for name in column if
-               (lambda_key in name)]
-    label = [name.split('_')[0] for name in column if (lambda_key in name)]
-    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 4))
+    # gets all column names for nuF_nu
+    nu_Fnu_columns = np.array([item for item in column if (nu_Fnu_key in item)
+                              and (error_key not in item)
+                              and (lim_key not in item)]) 
+    all_lambda = []
+    all_nuFnu = []
+    is_ploted = []
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(10, 4))
+    plt.subplots_adjust(left=0.1, bottom=0.14, right=0.6, top=0.92)
     ax.set_yscale("log")
     ax.set_xscale("log")
-    is_ploted = []
-    for lamb, nuFnu, co, mk, nm in zip(lambda_values, nu_Fnu_values,
-                                       colors, markers, label):
-        if nm in set(is_ploted):
-            ax.scatter(lamb, nuFnu, color=co, cmap=plt.cm.turbo, marker=mk,
-                       alpha=alpha, s=ms)
-        else:
-            ax.scatter(lamb, nuFnu, color=co, cmap=plt.cm.turbo, marker=mk,
-                       alpha=alpha, label=nm, s=ms)
-            is_ploted.append(nm)
-    ax.plot(lambda_values[np.argsort(lambda_values)],
-            nu_Fnu_values[np.argsort(lambda_values)],
-            'k:', alpha=0.8, zorder=0)
-    # print(lambda_values)
-    # print(nu_Fnu_values)
+    for nm in nu_Fnu_columns:
+        # print(nm)
+        if pd.notna(df[nm][0]):
+            all_lambda.append(df[nm[:-6] + 'lambda'][0])
+            all_nuFnu.append(df[nm][0])
+            survey_name = nm.split('_')[0]
+            if survey_name not in list(set(is_ploted)):
+                ax.scatter(df[nm[:-6] + 'lambda'][0], df[nm][0],
+                           color=zp.colors[survey_name], cmap=cmap,
+                           marker=zp.markers[survey_name],
+                           alpha=alpha, label=survey_name, s=ms)
+                is_ploted.append(survey_name)
+            else:
+                ax.scatter(df[nm[:-6] + 'lambda'][0], df[nm][0],
+                           color=zp.colors[survey_name], cmap=cmap,
+                           marker=zp.markers[survey_name],
+                           alpha=alpha, s=ms)
+    ax.plot(np.array(all_lambda)[np.argsort(all_lambda)],
+            np.array(all_nuFnu)[np.argsort(all_lambda)], 'k:', 
+            alpha=0.8, zorder=0)
     ax.set_xlabel(r'Wavelength - $\mu$m')
-    ax.set_ylabel(r'$\nu F(\nu)$ - erg/s/$cm^2$/Hz')
+    ax.set_ylabel(r'$\nu F(\nu)$ - erg/s/$cm^2$')
     ax.set_title(f'SED for {df["Internal_ID"].iloc[0]}')
-    ax.set_xticks([0.1, 1, 2, 5, 10, 20, 100, 500, 850])
-    ax.set_xticklabels([0.1, 1, 2, 5, 10, 20, 100, 500, 850])
-    ax.set_xlim(0.1, 1e4)
+    ax.set_xticks([0.1, 1, 2, 5, 10, 20, 100, 500, 900])
+    ax.set_xticklabels([0.1, 1, 2, 5, 10, 20, 100, 500, 900])
+    ax.set_xlim(0.1, 1.1e3)
     ax.set_ylim(1e-16, 1e-5)
-    ax.legend()
+    ax.legend(ncol=3, bbox_to_anchor=(1.05, 1), loc='upper left')
     if bool(save):
         plt.savefig(save_dir + 'SED_' + str(df["Internal_ID"].iloc[0]) +
                     '.png')
