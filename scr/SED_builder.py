@@ -66,8 +66,8 @@ class zeropoints:
             self.bib = row['bib']
 
 
-def plotSED(zp, df, alpha=0.6, ms=50, save=False, cmap=plt.cm.nipy_spectral,
-            save_dir='/Users/juliaroquette/Work/Plots/SED/', talkative=False):
+def plotSED(zp, df, alpha=0.9, ms=150, save=False, cmap=plt.cm.nipy_spectral,
+            save_dir='/Users/juliaroquette/Work/Plots/SED/', prefix='', talkative=False, **kargs):
     """
     zp is the class zeropoints loaded, for example:
         zp = zeropoints()
@@ -93,10 +93,18 @@ def plotSED(zp, df, alpha=0.6, ms=50, save=False, cmap=plt.cm.nipy_spectral,
     all_lambda = []
     all_nuFnu = []
     is_ploted = []
-    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(10, 4))
-    plt.subplots_adjust(left=0.1, bottom=0.14, right=0.6, top=0.92)
+    fig = None
+    if 'fig' in kargs.keys(): fig=kargs['fig']
+    if 'ax' not in kargs.keys():
+        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(10, 4), dpi=200)
+        plt.subplots_adjust(left=0.1, bottom=0.14, right=0.6, top=0.92)
     ax.set_yscale("log")
     ax.set_xscale("log")
+    for axis in ['top','bottom','left','right']:
+        ax.spines[axis].set_linewidth(4)
+
+    # increase tick width
+    ax.tick_params(width=4)
     for nm in nu_Fnu_columns:
         # print(nm)
         if pd.notna(df[nm][0]):
@@ -116,18 +124,18 @@ def plotSED(zp, df, alpha=0.6, ms=50, save=False, cmap=plt.cm.nipy_spectral,
                            alpha=alpha, s=ms)
     ax.plot(np.array(all_lambda)[np.argsort(all_lambda)],
             np.array(all_nuFnu)[np.argsort(all_lambda)], 'k:', 
-            alpha=0.8, zorder=0)
-    ax.set_xlabel(r'Wavelength - $\mu$m')
-    ax.set_ylabel(r'$\nu F(\nu)$ - erg/s/$cm^2$')
-    ax.set_title(f'SED for {df["Internal_ID"].iloc[0]}')
-    ax.set_xticks([0.1, 1, 2, 5, 10, 20, 100, 500, 900])
-    ax.set_xticklabels([0.1, 1, 2, 5, 10, 20, 100, 500, 900])
-    ax.set_xlim(0.1, 1.1e3)
-    ax.set_ylim(1e-16, 1e-5)
+            alpha=0.8, zorder=0, lw=3)
+    ax.set_xlabel(r'Wavelength - $\mu$m', fontsize=18)
+    ax.set_ylabel(r'$\nu F(\nu)$ - erg/s/$cm^2$', fontsize=18)
+    ax.set_title(f'SED for {df["Internal_ID"].iloc[0]}', fontsize=18)
+    ax.set_xticks([1, 2, 10, 100, 1000])
+    ax.set_xticklabels([1, 2, 10, 100, 1000])
+    ax.set_xlim(0.2, 1.1e3)
+    ax.set_ylim(1e-16, 1e-7)
     ax.legend(ncol=3, bbox_to_anchor=(1.05, 1), loc='upper left')
     if bool(save):
-        plt.savefig(save_dir + 'SED_' + str(df["Internal_ID"].iloc[0]) +
-                    '.png')
+        plt.savefig(save_dir + prefix + 'SED_' + str(df["Internal_ID"].iloc[0]) +
+                    '.jpg')
         plt.close(fig)
     else:
         plt.show()
