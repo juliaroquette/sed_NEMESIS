@@ -90,11 +90,22 @@ def plotSED(zp, df, alpha=0.9, ms=150, save=False, cmap=plt.cm.nipy_spectral,
     nu_Fnu_columns = np.array([item for item in column if (nu_Fnu_key in item)
                               and (error_key not in item)
                               and (lim_key not in item)]) 
+    if 'df2' in kargs.keys():
+       df2 = kargs['df2']    
+    if 'df2' in kargs.keys():
+        column2 = df2.columns.to_list()        
+        nu_Fnu_columns2 = np.array([item for item in column2 if (nu_Fnu_key in item)
+                              and (error_key not in item)
+                              and (lim_key not in item)]) 
     all_lambda = []
     all_nuFnu = []
     is_ploted = []
     fig = None
-    if 'fig' in kargs.keys(): fig=kargs['fig']
+    ax = None
+    if 'fig' in kargs.keys(): 
+        fig = kargs['fig']
+    if 'ax' in kargs.keys(): 
+        ax = kargs['ax']
     if 'ax' not in kargs.keys():
         fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(10, 4), dpi=200)
         plt.subplots_adjust(left=0.1, bottom=0.14, right=0.6, top=0.92)
@@ -113,15 +124,33 @@ def plotSED(zp, df, alpha=0.9, ms=150, save=False, cmap=plt.cm.nipy_spectral,
             survey_name = nm.split('_')[0]
             if survey_name not in list(set(is_ploted)):
                 ax.scatter(df[nm[:-6] + 'lambda'][0], df[nm][0],
-                           color=zp.colors[survey_name], cmap=cmap,
-                           marker=zp.markers[survey_name],
-                           alpha=alpha, label=survey_name, s=ms)
+                        color=zp.colors[survey_name], cmap=cmap,
+                        marker=zp.markers[survey_name],
+                        alpha=alpha, label=survey_name, s=ms)
                 is_ploted.append(survey_name)
             else:
                 ax.scatter(df[nm[:-6] + 'lambda'][0], df[nm][0],
-                           color=zp.colors[survey_name], cmap=cmap,
-                           marker=zp.markers[survey_name],
-                           alpha=alpha, s=ms)
+                        color=zp.colors[survey_name], cmap=cmap,
+                        marker=zp.markers[survey_name],
+                        alpha=alpha, s=ms)
+    if 'df2' in kargs.keys():
+        lb = True
+        for nm in nu_Fnu_columns2:
+            # print(nm)
+            if pd.notna(df2[nm][0]):
+                all_lambda.append(df2[nm[:-6] + 'lambda'][0])
+                all_nuFnu.append(df2[nm][0])
+                if bool(lb):
+                    ax.scatter(df2[nm[:-6] + 'lambda'][0], df2[nm][0],
+                            color='k',
+                            marker='D', facecolors='none', 
+                            alpha=alpha - 0.2, label='Vizier-SED', s=ms+50, zorder=0) 
+                    lb = False
+                else:
+                    ax.scatter(df2[nm[:-6] + 'lambda'][0], df2[nm][0],
+                            color='k',
+                            marker='D', facecolors='none',
+                            alpha=alpha - 0.2, s=ms+50, zorder=0) 
     ax.plot(np.array(all_lambda)[np.argsort(all_lambda)],
             np.array(all_nuFnu)[np.argsort(all_lambda)], 'k:', 
             alpha=0.8, zorder=0, lw=3)
@@ -130,7 +159,7 @@ def plotSED(zp, df, alpha=0.9, ms=150, save=False, cmap=plt.cm.nipy_spectral,
     ax.set_title(f'SED for {df["Internal_ID"].iloc[0]}', fontsize=18)
     ax.set_xticks([1, 2, 10, 100, 1000])
     ax.set_xticklabels([1, 2, 10, 100, 1000])
-    ax.set_xlim(0.2, 1.1e3)
+    ax.set_xlim(0.2, 1.5e3)
     ax.set_ylim(1e-16, 1e-7)
     ax.legend(ncol=3, bbox_to_anchor=(1.05, 1), loc='upper left')
     if bool(save):
@@ -139,6 +168,10 @@ def plotSED(zp, df, alpha=0.9, ms=150, save=False, cmap=plt.cm.nipy_spectral,
         plt.close(fig)
     else:
         plt.show()
+    if 'fig' in kargs.keys(): 
+        if 'ax' in kargs.keys(): 
+            return fig, ax
+
 
 
 def flux2mag(flux, zeropoint, err_flux):
@@ -199,3 +232,23 @@ def flux2nuFnu(lam_eff, flux, error, cgs=True):
         nuF_nu_error = (error*freq).to(u.W / u.m**2)
     # Return the nuF_nu values as a NumPy array
     return nuF_nu.value, nuF_nu_error.value
+
+def VizierSED2mine(id_, 
+                   vizier_sed='/Users/juliaroquette/Work/Data/vizier_David/SED/raw5/reduced/'):
+    """
+    Function for converting SEDs obtained with the Vizier-SED web service
+    into the same format as my seds.
+    """
+    vizier_sed = pd.read_csv(vizier_sed + f'{id_:05d}.csv')
+    new_sed = pd.DataFrame({'Internal_ID' : [id_]})
+    for i in range(len(vizier_sed)):
+        nm = ''
+        for n in vizier_sed.sed_filter[i].replace(':', ' ').replace('=', ' ').replace('/', ' ').split(' '):
+            if n != ' ':
+                nm += n + '_'
+        new_sed[ nm + 'lambda'] = vizier_sed.sed_wl[i]
+        new_sed[ nm + 'nu_Fnu']= vizier_sed.sed_fd[i]
+        new_sed[ nm + 'nu_Fnu_error'] = 10**vizier_sed.log_fd_err[i]
+    return new_sed
+    
+    
