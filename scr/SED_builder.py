@@ -90,6 +90,7 @@ def plotSED(zp, df, alpha=0.9, ms=150, save=False, cmap=plt.cm.nipy_spectral,
     nu_Fnu_columns = np.array([item for item in column if (nu_Fnu_key in item)
                               and (error_key not in item)
                               and (lim_key not in item)]) 
+    identify_gabor = [item for item in nu_Fnu_columns if ('NEMESIS' in item)]
     if 'df2' in kargs.keys():
        df2 = kargs['df2']    
     if 'df2' in kargs.keys():
@@ -117,6 +118,10 @@ def plotSED(zp, df, alpha=0.9, ms=150, save=False, cmap=plt.cm.nipy_spectral,
     # increase tick width
     ax.tick_params(width=4)
     for nm in nu_Fnu_columns:
+        if nm in identify_gabor:
+            gabor = True
+        else:
+            gabor = False
         # print(nm)
         if pd.notna(df[nm][0]):
             all_lambda.append(df[nm[:-6] + 'lambda'][0])
@@ -133,6 +138,17 @@ def plotSED(zp, df, alpha=0.9, ms=150, save=False, cmap=plt.cm.nipy_spectral,
                         color=zp.colors[survey_name], cmap=cmap,
                         marker=zp.markers[survey_name],
                         alpha=alpha, s=ms)
+            if bool(gabor):
+                if survey_name not in list(set(is_ploted)):
+                    ax.scatter(df[nm[:-6] + 'lambda'][0], df[nm][0], color='k',
+                            marker='8', facecolors='none', alpha=alpha - 0.2,
+                            label='NEMESIS Herschel 0.1', s=ms+50, zorder=10) 
+                    is_ploted.append(survey_name)
+                else:
+                    ax.scatter(df[nm[:-6] + 'lambda'][0], df[nm][0], color='k',
+                            marker='8', facecolors='none', alpha=alpha - 0.2,
+                            s=ms+50, zorder=10)                    
+                                          
     if 'df2' in kargs.keys():
         lb = True
         for nm in nu_Fnu_columns2:
@@ -243,12 +259,22 @@ def VizierSED2mine(id_,
     new_sed = pd.DataFrame({'Internal_ID' : [id_]})
     for i in range(len(vizier_sed)):
         nm = ''
-        for n in vizier_sed.sed_filter[i].replace(':', ' ').replace('=', ' ').replace('/', ' ').split(' '):
-            if n != ' ':
-                nm += n + '_'
-        new_sed[ nm + 'lambda'] = vizier_sed.sed_wl[i]
-        new_sed[ nm + 'nu_Fnu']= vizier_sed.sed_fd[i]
-        new_sed[ nm + 'nu_Fnu_error'] = 10**vizier_sed.log_fd_err[i]
+        if pd.notna(vizier_sed.sed_filter[i]):
+            for n in vizier_sed.sed_filter[i].replace(':', ' ').replace('=', ' ').replace('/', ' ').split(' '):
+                if n != ' ':
+                    nm += n + '_'
+            # new_sed = pd.concat([new_sed, pd.DataFrame({nm + '_RAJ2000': [vizier_sed._RAJ2000[i]]})], axis=1)
+            # new_sed = pd.concat([new_sed, pd.DataFrame({nm + '_DEJ2000': [vizier_sed._DEJ2000[i]]})], axis=1)     
+            # new_sed = pd.concat([new_sed, pd.DataFrame({nm + '_tab_bib': [vizier_sed._tabname[i]]})], axis=1)
+            # new_sed = pd.concat([new_sed, pd.DataFrame({nm + 'lambda': [vizier_sed.sed_wl[i]]})], axis=1)
+            # new_sed = pd.concat([new_sed, pd.DataFrame({nm + 'nu_Fnu': [vizier_sed.sed_fd[i]]})], axis=1)
+            # new_sed = pd.concat([new_sed, pd.DataFrame({nm + 'nu_Fnu_error': [10**vizier_sed.log_fd_err[i]]})], axis=1)                
+            new_sed[nm + '_RAJ2000'] = vizier_sed._RAJ2000[i]
+            new_sed[nm + '_DEJ2000'] = vizier_sed._DEJ2000[i]                
+            new_sed[nm + '_tab_bib'] = vizier_sed._tabname[i]
+            new_sed[ nm + 'lambda'] = vizier_sed.sed_wl[i]
+            new_sed[ nm + 'nu_Fnu']= vizier_sed.sed_fd[i]
+            new_sed[ nm + 'nu_Fnu_error'] = 10**vizier_sed.log_fd_err[i]
     return new_sed
     
     
