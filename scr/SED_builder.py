@@ -31,6 +31,8 @@ class zeropoints:
         self.lambda_refs = []
         self.zps = []
         self.refs = []
+        self.Weff = []
+        
         with open(my_dir + 'zero_points.csv', 'r') as f:
             reader = csv.DictReader(f, skipinitialspace=True)
             for r in reader:
@@ -39,11 +41,15 @@ class zeropoints:
                 self.lambda_refs.append(float(r['lambda_ref']))
                 self.zps.append(float(r['zp']))
                 self.refs.append(r['bib'])
+                self.Weff.append(r['Weff'])
+                
         order = np.argsort(np.array(self.lambda_refs))
         self.bands = np.array(self.bands)[order]
         self.lambda_refs = np.array(self.lambda_refs)[order]
         self.zps = np.array(self.zps)[order]
         self.refs = np.array(self.refs)[order]
+        self.Weff = np.array(self.Weff)[order]
+        
         #
         survey_names = []
         for name in self.bands:
@@ -62,7 +68,7 @@ class zeropoints:
         def __init__(self, row):
             self.lambda_ref = float(row['lambda_ref'])
             self.zp = float(row['zp'])
-            # self.err_zp = float(row['err_zp'])
+            self.Weff = float(row['Weff'])
             self.bib = row['bib']
 
 
@@ -123,31 +129,37 @@ def plotSED(zp, df, alpha=0.9, ms=150, save=False, cmap=plt.cm.nipy_spectral,
         else:
             gabor = False
         # print(nm)
-        if pd.notna(df[nm][0]):
+        if pd.notna(df[nm][0]):            
             all_lambda.append(df[nm[:-6] + 'lambda'][0])
             all_nuFnu.append(df[nm][0])
             survey_name = nm.split('_')[0]
             if survey_name not in list(set(is_ploted)):
+                if bool(gabor):
+                    color_ = 'tab:blue'
+                    zorder=100
+                else:
+                    color_ = zp.colors[survey_name]
+                    zorder = 1
                 ax.scatter(df[nm[:-6] + 'lambda'][0], df[nm][0],
-                        color=zp.colors[survey_name], cmap=cmap,
-                        marker=zp.markers[survey_name],
+                        color=color_, cmap=cmap,
+                        marker=zp.markers[survey_name], zorder=zorder,
                         alpha=alpha, label=survey_name, s=ms)
                 is_ploted.append(survey_name)
             else:
                 ax.scatter(df[nm[:-6] + 'lambda'][0], df[nm][0],
-                        color=zp.colors[survey_name], cmap=cmap,
+                        color=color_, cmap=cmap, zorder=zorder,
                         marker=zp.markers[survey_name],
                         alpha=alpha, s=ms)
             if bool(gabor):
                 if survey_name not in list(set(is_ploted)):
                     ax.scatter(df[nm[:-6] + 'lambda'][0], df[nm][0], color='k',
                             marker='8', facecolors='none', alpha=alpha - 0.2,
-                            label='NEMESIS Herschel 0.1', s=ms+50, zorder=10) 
+                            label='NEMESIS Herschel 0.1', s=ms+50, zorder=101) 
                     is_ploted.append(survey_name)
                 else:
                     ax.scatter(df[nm[:-6] + 'lambda'][0], df[nm][0], color='k',
                             marker='8', facecolors='none', alpha=alpha - 0.2,
-                            s=ms+50, zorder=10)                    
+                            s=ms+50, zorder=101)                    
                                           
     if 'df2' in kargs.keys():
         lb = True
@@ -249,8 +261,11 @@ def flux2nuFnu(lam_eff, flux, error, cgs=True):
     # Return the nuF_nu values as a NumPy array
     return nuF_nu.value, nuF_nu_error.value
 
+
+
 def VizierSED2mine(id_, 
-                   vizier_sed='/Users/juliaroquette/Work/Data/vizier_David/SED/raw5/reduced/'):
+                   vizier_sed='/Users/juliaroquette/Work/Data/vizier_David/SED/raw5/reduced/',
+                   flux=True):
     """
     Function for converting SEDs obtained with the Vizier-SED web service
     into the same format as my seds.
@@ -275,6 +290,72 @@ def VizierSED2mine(id_,
             new_sed[ nm + 'lambda'] = vizier_sed.sed_wl[i]
             new_sed[ nm + 'nu_Fnu']= vizier_sed.sed_fd[i]
             new_sed[ nm + 'nu_Fnu_error'] = 10**vizier_sed.log_fd_err[i]
+            new_sed[ nm + 'nu_Fnu_error'] = np.nan
     return new_sed
     
-    
+class load_SED():
+    def __init__(self, sed_dir='/Users/juliaroquette/Work/Data/YSO/Orion/SED/',
+                       vizierFilename='VizierSED_complement_database_25July23.csv',
+                       filename="Orion_YSO_sed_24Jul23.csv"):
+        self.__path = sed_dir
+        self.__mainFile = filename
+        self.__vizierFile = vizierFilename        
+        self.mainDatabase = pd.read_csv(sed_dir + filename)      
+        self.vizierDatabase = pd.read_csv(sed_dir + vizierFilename)
+    def get_listSED(self, Internal_ID, which='main'):
+        """
+        which: 'vizier', 'main', 'both'
+        """
+        if which == 'both':
+            tables = ['main', 'vizier']
+        elif which == 'vizier':
+            new_database = self.vizierDatabase
+            bib_key = '__tab_bib'
+            tables = ['vizier']
+            
+        elif which == 'main':
+            new_database = self.mainDatabase            
+            bib_key = '_bib'
+            tables = ['main']            
+        else: 
+            print("Valid options: 'vizier'/'main'/'both'")    
+        nu_Fnu_key = 'nu_Fnu'
+        error_key = 'error'
+        lim_key = 'lim'
+        df = []
+        # try:        
+        for t in tables:
+            if t == 'vizier':
+                new_database = self.vizierDatabase
+                bib_key = '__tab_bib'
+                vizier = True
+            elif t == 'main':
+                new_database = self.mainDatabase            
+                bib_key = '_bib'
+                vizier = False
+            else:
+                new_database = None
+            column = new_database.columns.to_list()
+            nu_Fnu_columns = np.array([item for item in column 
+                                        if (nu_Fnu_key in item)
+                                    and (error_key not in item)
+                                    and (lim_key not in item)]) 
+            #
+            i = np.where(new_database.Internal_ID == Internal_ID)[0][0]
+            _filter = [f[:-7] for f in nu_Fnu_columns]
+            _nu_Fnu = [new_database[f[:-7] + '_nu_Fnu'][i] for f in nu_Fnu_columns]
+            _nu_Fnu_error = [new_database[f[:-7] + '_nu_Fnu_error'][i]  for f in nu_Fnu_columns]
+            _lambda = [new_database[f[:-7] + '_lambda'][i] for f in nu_Fnu_columns]
+            _bib = [new_database[f[:-7] + bib_key][i] for f in nu_Fnu_columns]
+            _vizier = [vizier for f in nu_Fnu_columns]
+
+            df.append(pd.DataFrame({'nu_Fnu': _nu_Fnu,
+                                                'nu_Fnu_error':_nu_Fnu_error,
+                                                'lambda':_lambda,
+                                                'bib': _bib,
+                                                'filter': _filter,
+                                                'Vizier': _vizier}))
+        return pd.concat(df).sort_values('lambda')
+        # except:
+        #     print("I did not find a source with Internal_ID {0}".format(Internal_ID))
+        #     return np.nan
