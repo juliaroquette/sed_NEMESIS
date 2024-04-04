@@ -1,4 +1,4 @@
 *_pycache_*
 *.pyc
 *.pyo
-.DS_Store
+*.DS_Store*
