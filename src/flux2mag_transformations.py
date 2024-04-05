@@ -55,13 +55,13 @@ class SVOFilterProfileService:
         """
         if bool(nemesis_name):
             band_name = self.nemesis2svo.loc[band_name, 'svo']
-            return PhotometricSystem(self.data.loc[band_name])
+            return PhotometricSystem(self.data.loc[band_name], band_name)
         else:
-            return PhotometricSystem(self.data.loc[band_name])
+            return PhotometricSystem(self.data.loc[band_name], band_name)
 
 
 class PhotometricSystem:
-    def __init__(self, data):
+    def __init__(self, data, band_name):
         """_summary_
 
         Args:
@@ -115,7 +115,7 @@ class PhotometricSystem:
                 TrasmissionCurve  object   Link for downloading the transmission curve
         """
         self.FilterProfileService = data['FilterProfileService']
-        self.filterID = data.index
+        self.filterID = band_name
         self.WavelengthUnit = data['WavelengthUnit']
         self.WavelengthUCD = data['WavelengthUCD']
         self.PhotSystem = data['PhotSystem']
