@@ -1,6 +1,6 @@
+.DS_Store
 *_pycache_*
 *.pyc
 *.pyo
 *.DS_Store*
-.DS_Store
 jupyter_dev/
