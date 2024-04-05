@@ -17,7 +17,7 @@ Uncertainties are propagated as:
 
 $\delta m=\frac{2.5}{\ln{10}}\frac{\delta_f}{f}$
 
-To revert, fluxes can be retrieved from magnitudes as: $f = f'\times10^\frac{-m}{2.5}$
+To revert, fluxes can be retrieved from magnitudes as: $f = f'\times10^\frac{-m}{2.5}$ as  $f'\times\log_10(10^{- \frac{mag}{2.5}})\times\frac{err_mag}{2.5}$
 
 Note that so far $m$ are observed magnitudes and $f$ are observed fluxes. In this context, observed magnitudes can be broken down in:
 
