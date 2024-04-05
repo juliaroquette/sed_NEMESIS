@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 import astropy.units as u
 import warnings
+import os
 
 class SVOFilterProfileService:
     """
@@ -32,6 +33,10 @@ class SVOFilterProfileService:
     def __init__(self,
                 nemesis_fname  = '../data/nemesis_key.csv',
                 svo_fname = '../data/svo_database.csv'):
+        nemesis_fname = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                           nemesis_fname)
+        svo_fname = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                           svo_fname)   
         self.data = pd.read_csv(svo_fname)
         self.data.set_index('filterID', inplace=True)
         self.nemesis2svo = pd.read_csv(nemesis_fname)
