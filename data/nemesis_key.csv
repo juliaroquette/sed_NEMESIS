@@ -74,6 +74,11 @@ eso_mpi_wfi_B,LaSilla/WFI.ESO878,Vega
 eso_mpi_wfi_V,LaSilla/WFI.ESO843,Vega
 eso_mpi_wfi_I,LaSilla/WFI.ESO879,Vega
 eso_mpi_wfi_TiO,,Vega
+eso_mpi_wfi_I_Vega,LaSilla/WFI.ESO879,Vega
+eso_mpi_wfi_B_Vega,LaSilla/WFI.ESO878,Vega
+eso_mpi_wfi_TiO_Vega,,Vega
+eso_mpi_wfi_V_Vega,LaSilla/WFI.ESO843,Vega
+eso_mpi_wfi_U_Vega,LaSilla/WFI.ESO877,Vega
 vlt_fors1__u_high,Paranal/FORS1.ESO1112,Vega
 sloanD_u,CTIO/DECam.u,AB
 sloanD_g,CTIO/DECam.g,AB
@@ -164,8 +169,3 @@ spitzer_IRS_23p0,Spitzer/IRS/23.0,
 spitzer_IRS_27p0,Spitzer/IRS/27.0,
 spitzer_IRS_31p0,Spitzer/IRS/31.0,
 spitzer_IRS_35p0,Spitzer/IRS/35.0,
-eso_mpi_wfi_I_Vega,LaSilla/WFI.ESO879,Vega
-eso_mpi_wfi_B_Vega,LaSilla/WFI.ESO878,Vega
-eso_mpi_wfi_TiO_Vega,,Vega
-eso_mpi_wfi_V_Vega,LaSilla/WFI.ESO843,Vega
-eso_mpi_wfi_U_Vega,LaSilla/WFI.ESO877,Vega
