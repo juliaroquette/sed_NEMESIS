@@ -55,13 +55,15 @@ class SVOFilterProfileService:
         """
         if bool(nemesis_name):
             band_name = self.nemesis2svo.loc[band_name, 'svo']
-            return PhotometricSystem(self.data.loc[band_name], band_name)
+            return PhotometricSystem(self.data.loc[band_name], 
+                                     band_name, 
+                                     calibration_system=self.nemesis2svo.loc[band_name, 'calibration'])
         else:
             return PhotometricSystem(self.data.loc[band_name], band_name)
 
 
 class PhotometricSystem:
-    def __init__(self, data, band_name):
+    def __init__(self, data, band_name, calibration_system='Vega'):
         """_summary_
 
         Args:
@@ -154,8 +156,9 @@ class PhotometricSystem:
         self.ZeroPointType = data['ZeroPointType']
         self.AsinhSoft = data['AsinhSoft']
         self.TrasmissionCurve = data['TrasmissionCurve']
+        self.calibration_system_in_use = calibration_system
         
-    def flux2mag(self, flux, err_flux, calibration_system='Vega'):
+    def flux2mag(self, flux, err_flux):
         """
         Convert fluxes to magnitudes as:
         mag = -2.5*log10(flux/zeropoint)
@@ -166,19 +169,19 @@ class PhotometricSystem:
             err_flux: in Jy
             zeropoint: in Jy
         """
-        if calibration_system == "Vega":
+        if self.calibration_system_in_use == "Vega":
             zeropoint = self.ZeroPointVega
-        elif calibration_system == "AB":
+        elif self.calibration_system_in_use == "AB":
             zeropoint = self.ZeroPointAB
-        elif calibration_system == "ST":
+        elif self.calibration_system_in_use == "ST":
             zeropoint = self.ZeroPointST
         else:
-            raise ValueError(f"Calibration system {calibration_system} not recognized")
+            raise ValueError(f"Calibration system {self.calibration_system_in_use} not recognized")
         return -2.5*np.log10(flux/zeropoint), 2.5*err_flux/np.log(10)/flux
     
 
     
-    def mag2flux(self, mag, err_mag, calibration_system='Vega'):
+    def mag2flux(self, mag, err_mag):
         """
         Convert magnitudes to fluxes as:
         flux = 10**(-mag/2.5)*zeropoint
@@ -189,20 +192,20 @@ class PhotometricSystem:
             err_mag: in mag
             zeropoint: in Jy
         """
-        if calibration_system == "Vega":
+        if self.calibration_system_in_use == "Vega":
             zeropoint = self.ZeroPointVega
             self.flux_units = self.ZeroPointVegaUnit
-        elif calibration_system == "AB":
+        elif self.calibration_system_in_use == "AB":
             zeropoint = self.ZeroPointAB
             self.flux_units = self.ZeroPointABUnit
-        elif calibration_system == "ST":
+        elif self.calibration_system_in_use == "ST":
             zeropoint = self.ZeroPointST
             if self.ZeroPointSTUnit == 'erg/(s.cm2.A)':
-                raise NotImplementedError(f"Calibration system {calibration_system} not implemented yet")
+                raise NotImplementedError(f"Calibration system {self.calibration_system_in_use} not implemented yet")
                 # zeropoint = (zeropoint* u.erg / u.s / u.cm**2 / u.AA).to(u.Jy).value
                 # self.flux_units = 'Jy'
         else:
-            raise ValueError(f"Calibration system {calibration_system} not recognized")            
+            raise ValueError(f"Calibration system {self.calibration_system_in_use} not recognized")            
         return zeropoint * 10**(- mag/2.5), zeropoint*np.log(10) *\
             (10**(- mag/2.5))*err_mag/2.5
     
