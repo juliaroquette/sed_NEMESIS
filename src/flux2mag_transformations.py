@@ -54,10 +54,12 @@ class SVOFilterProfileService:
             _type_: _description_
         """
         if bool(nemesis_name):
-            band_name = self.nemesis2svo.loc[band_name, 'svo']
-            return PhotometricSystem(self.data.loc[band_name], 
-                                     band_name, 
-                                     calibration_system=self.nemesis2svo.loc[band_name, 'calibration'])
+            band_name_ = self.nemesis2svo.loc[band_name, 'svo']
+            calib = self.nemesis2svo.loc[band_name, 'calibration']
+            print(band_name, calib)
+            return PhotometricSystem(self.data.loc[band_name_], 
+                                     band_name_,
+                                     calibration_system=calib)
         else:
             return PhotometricSystem(self.data.loc[band_name], band_name)
 
@@ -147,7 +149,7 @@ class PhotometricSystem:
         self.ZeroPointVegaUnit = data['ZeroPointUnit']
         #
         self.ZeroPointAB = 3631.
-        self.ZeroPointVegaUnit = 'Jy'
+        self.ZeroPointABUnit = 'Jy'
         #
         self.ZeroPointST = 3.631e-9     
         self.ZeroPointSTUnit = 'erg/(s.cm2.A)'
