@@ -1,6 +1,6 @@
 This repository focuses on tools related to the production of SEDs under the scope of the NEMESIS project. 
 
-**Last Update**: @juliaroquette  - 5 April 2024
+**Last Update**: @juliaroquette  - 8 April 2024
 
 
 
@@ -30,7 +30,7 @@ import sys
 sys.path.append('PAT/TO/THE/PACKAGE/LOCATION')  
 ```
 
-
+To load the our offline version of the SVO database:
 
 ```python 
 from flux2mag_transformations import SVOFilterProfileService
@@ -38,10 +38,30 @@ from flux2mag_transformations import SVOFilterProfileService
 svo_object = SVOFilterProfileService()
 ```
 
+To load the information for a specific photometric band:
 
 
 ```python 
-zp = test.get_filterInfo('johnson_U', nemesis_name=True)
+zp = test.get_filterInfo('Generic/Johnson')
 ```
 
+To print some info for this filter, for example, the filter ID on SVO and its effective wavelength:
+
+```python
+ print(zp.filterID , zp.WavelengthEff)
+```
+
+To use the SVO info to convert from magnitudes to fluxes:
+
+```python
+   flux, flux_error = zp.mag2flux(mag, mag_error)
+```
+
+In this example, `mag` and  `mag_error` are the magnitude and its uncertainty in the `Generic/Johnson.U` band.
+
+If the filter name follows the NEMESIS Orion compilation nomenclature, the zero-point info can be loaded using the NEMESIS column names as long as `nemesis_name=True`. Valid NEMESIS names are listed in the `data/nemesis_key.csv` table. In this example, `Generic/Johnson.U` is called `johnson_U` within the NEMESIS catalogue. 
+
+```python
+    zp = svo.get_filterInfo('johnson_U', nemesis_name=True)
+```
 
