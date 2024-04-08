@@ -64,7 +64,7 @@ ukirt_Y,UKIRT/WFCAM.Y,Vega
 ukirt_J,UKIRT/WFCAM.J,Vega
 ukirt_H,UKIRT/WFCAM.H,Vega
 ukirt_K,UKIRT/WFCAM.K,Vega
-ukirt_I,UKIRT/UFTI.I	,Vega
+ukirt_I,UKIRT/UFTI.I,Vega
 ukirt_N,UKIRT/MAX.N,Vega
 ukirt_Q,UKIRT/MAX.Q,Vega
 eso_mpg_wfi_851,LaSilla/WFI.ESO851,Vega
@@ -110,7 +110,7 @@ iso_LW2,ISO/ISO.LW2,Vega
 iso_LW3,ISO/ISO.LW3,Vega
 gemini_trecs_si5,Gemini/TReCS.Si5,Vega
 hst_wfc3_ir_F139M,HST/WFC3_IR.F139M,Vega
-aca_880,ACA/870,
+aca_870,ACA/870,
 ps1_g,PAN-STARRS/PS1.g,AB
 ps1_r,PAN-STARRS/PS1.r,AB
 ps1_i,PAN-STARRS/PS1.i,AB
@@ -123,10 +123,10 @@ generic_V,Generic/Johnson.V,Vega
 generic_R,Generic/Johnson.R,Vega
 generic_I,Generic/Johnson.I,Vega
 generic_B,Generic/Johnson.B,Vega
-generic_J,Johnson_UBVRIJHKL.J,Vega
-generic_H,Johnson_UBVRIJHKL.H,Vega
-generic_K,Johnson_UBVRIJHKL.K,Vega
-generic_L,Johnson_UBVRIJHKL.LI,Vega
+generic_J,Generic/Johnson_UBVRIJHKL.J,Vega
+generic_H,Generic/Johnson_UBVRIJHKL.H,Vega
+generic_K,Generic/Johnson_UBVRIJHKL.K,Vega
+generic_L,Generic/Johnson_UBVRIJHKL.LI,Vega
 generic_M,Generic/Johnson.M,Vega
 generic_N,Generic/Johnson_UBVRIJHKL.N,Vega
 generic_Q,UKIRT/MAX.Q,Vega
